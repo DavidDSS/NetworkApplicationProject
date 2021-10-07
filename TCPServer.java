@@ -1,3 +1,5 @@
+//Authors: DAVID SALDANA (6155964), LIAM YETHON (6255384), JESSE MASCIARELLI (6243109), KATIE LEE (6351696)
+
 import java.net.*;
 import java.io.*;
 import java.util.*;
@@ -28,7 +30,6 @@ public class TCPServer {
 
                 //Start new client thread
                 new Thread(client).start();
-                //client.printMessage("Waiting for another player");
             }
 
             clientStack.get(0).printMessage("Starting Game, choose 'rock', 'paper', or 'scissors':");

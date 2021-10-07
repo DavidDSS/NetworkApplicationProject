@@ -1,3 +1,5 @@
+//Authors: DAVID SALDANA (6155964), LIAM YETHON (6255384), JESSE MASCIARELLI (6243109), KATIE LEE (6351696)
+
 import java.io.*;
 import java.net.*;
 
@@ -20,20 +22,27 @@ public class TCPClient{
 			//User Input
 			String userInput;
 			String serverInput;
+
+			//Waits for Server Input
 			if(((serverInput = in.readLine())!= null)){
 				System.out.println(serverInput);
 				out.println(serverInput);
 			}
+
+			//Waits for User Input
 			while (((userInput = stdIn.readLine().toLowerCase()) != null) && !userInput.equals("rock") && !userInput.equals("paper") && !userInput.equals("scissors")) {
 				System.out.println("Invalid move. Please enter one of the following: rock, paper, scissors\n");
 			}
 
+			//Sends User Input to Server
 			out.println(userInput);
-			
+
+			//Waits for Server Input
 			if(((serverInput = in.readLine())!= null)){
 				System.out.println(serverInput);
 				out.println(serverInput);
 			}
+			
 			while(((serverInput = in.readLine())!= null)){
 				System.out.println(serverInput);
 			}
