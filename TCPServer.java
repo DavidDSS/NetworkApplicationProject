@@ -12,6 +12,9 @@ public class TCPServer {
             System.err.println("Provide Parameter: java JavaServer <port number>");
             System.exit(1);
         }
+        System.out.println("ROCK, PAPER, SCISSORS");
+        System.out.println("Waiting for 2 players to connect...");
+
         portNumber = Integer.parseInt(args[0]);
         try (ServerSocket serverSocket = new ServerSocket(portNumber);) {
             //Infinite while loop to accept incoming clients
@@ -28,8 +31,8 @@ public class TCPServer {
                 //client.printMessage("Waiting for another player");
             }
 
-            clientStack.get(0).printMessage("Starting Game");
-            clientStack.get(1).printMessage("Starting Game");
+            clientStack.get(0).printMessage("Starting Game, choose 'rock', 'paper', or 'scissors':");
+            clientStack.get(1).printMessage("Starting Game, choose 'rock', 'paper', or 'scissors':");
             
             //Wait for both players to respond
             while(p1Move==null || p2Move==null){
@@ -40,11 +43,9 @@ public class TCPServer {
             clientStack.get(0).printMessage("Checking who won...");
             clientStack.get(1).printMessage("Checking who won...");
 
-            System.out.println(p1Move);
-            System.out.println(p2Move);
+            clientStack.get(0).printMessage("You -> " + p1Move + " VS " +p2Move+ " <- Opponent");
+            clientStack.get(1).printMessage("You -> " + p2Move + " VS " +p1Move+ " <- Opponent");
 
-            clientStack.get(0).printMessage("You: " + p1Move + " | " +p2Move+ " :Opponent");
-            clientStack.get(1).printMessage("You: " + p2Move + " | " +p1Move+ " :Opponent");
             //Rock, Paper, Scissors Logic
             if(p1Move.equals(p2Move)){
                 clientStack.get(0).printMessage("Its a TIE");
@@ -86,9 +87,12 @@ public class TCPServer {
                     clientStack.get(0).printMessage("You WIN!");
                 }
             }
+            System.out.println("Game Over!");
+            System.out.println("Results sent to players");
+            System.exit(1);
         }
         catch (IOException e) {
-            System.out.println("There was an exception "+e.getMessage());
+            System.out.println("Game Closed "+e.getMessage());
         }
     }
 
@@ -114,7 +118,7 @@ public class TCPServer {
                     }
                     //Checks for user input
                     playerMove=in.readLine();
-                    if(playerMove!=null) System.out.println("Player Move: "+playerMove);
+                    if(playerMove!=null) System.out.println("Player Move Accepted!");
                 }
             }
             catch (IOException e) {
