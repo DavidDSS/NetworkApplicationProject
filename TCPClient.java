@@ -11,22 +11,31 @@ public class TCPClient{
 		String hostName = args[0];
 		int portNumber = Integer.parseInt(args[1]);
 
-		try(    Socket echoSocket = new Socket(hostName, portNumber);
-				PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
-				BufferedReader in= new BufferedReader (new InputStreamReader(echoSocket.getInputStream()));
-				BufferedReader stdIn= new BufferedReader( new InputStreamReader(System.in))){
+		try(Socket echoSocket = new Socket(hostName, portNumber);
+			PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
+			BufferedReader in= new BufferedReader (new InputStreamReader(echoSocket.getInputStream()));
+			BufferedReader stdIn= new BufferedReader( new InputStreamReader(System.in))){
 			System.out.println("Server Connection Accepted.");
 
-			//user input
+			//User Input
 			String userInput;
+			String serverInput;
+			if(((serverInput = in.readLine())!= null)){
+				System.out.println(serverInput);
+				out.println(serverInput);
+			}
+			while (((userInput = stdIn.readLine()) != null) && !userInput.equals("rock") && !userInput.equals("paper") && !userInput.equals("scissors")) {
+				System.out.println("Invalid move. Please enter one of the following: rock, paper, scissors\n");
+			}
 
-			while((userInput = stdIn.readLine()) != null){
-				if (!userInput.equals("rock") && !userInput.equals("paper") && !userInput.equals("scissors")) {
-					System.out.println("Invalid move. Please enter one of the following: rock, paper, scissors\n");
-				}
-				else {
-					out.println(userInput);
-				}
+			out.println(userInput);
+			
+			if(((serverInput = in.readLine())!= null)){
+				System.out.println(serverInput);
+				out.println(serverInput);
+			}
+			while(((serverInput = in.readLine())!= null)){
+				System.out.println(serverInput);
 			}
 		}
 		catch (UnknownHostException e){
