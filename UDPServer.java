@@ -1,49 +1,47 @@
 import java.io.*;
 import java.net.*;
 
-public class udp_server
-{
-    public static void main(String args[])
-    {
-        DatagramSocket sock = null;
+public class UDPServer {
+    public static void main(String args[]) {
+        try {
+            boolean gameOver=false;
 
-        try
-        {
-            //1. creating a server socket, parameter is local port number
-            sock = new DatagramSocket(7777);
+            //Packet Size
+            byte[] bufferLength = new byte[999];
 
-            //buffer to receive incoming data
-            byte[] buffer = new byte[65536];
-            DatagramPacket incoming = new DatagramPacket(buffer, buffer.length);
+            //Datagram Socket
+            DatagramSocket dSocket = new DatagramSocket(4000);
 
-            //2. Wait for an incoming data
-            echo("Server socket created. Waiting for incoming data...");
+            //Datagram Packet
+            DatagramPacket dPacket = new DatagramPacket(bufferLength, bufferLength.length);
 
-            //communication loop
-            while(true)
-            {
-                sock.receive(incoming);
-                byte[] data = incoming.getData();
-                String s = new String(data, 0, incoming.getLength());
+            System.out.println("Waiting for 2 players to join the game...");
 
-                //echo the details of incoming data - client ip : client port - client message
-                echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + s);
+            //Server waits for incoming connections
+            while(!gameOver) {
+                //Receive Packet from a Client
+                dSocket.receive(dPacket);
 
-                s = "OK : " + s;
-                DatagramPacket dp = new DatagramPacket(s.getBytes() , s.getBytes().length , incoming.getAddress() , incoming.getPort());
-                sock.send(dp);
+                //Convert incoming packet into string
+                String clientMessage = new String(dPacket.getData(), 0, dPacket.getLength());
+
+                //Print Details Server Side
+                System.out.println("Client said: "+clientMessage);
+
+                //Send a message back to client
+                clientMessage = "Server received your message: " + clientMessage;
+
+                //Build DatagramPacket that will be sent back to client
+                DatagramPacket responsePacket = new DatagramPacket(clientMessage.getBytes() , clientMessage.getBytes().length ,
+                        dPacket.getAddress() , dPacket.getPort());
+
+                //Send DatagramPacket back to client
+                dSocket.send(responsePacket);
             }
         }
-
-        catch(IOException e)
-        {
-            System.err.println("IOException " + e);
+        //Handles IO Exception
+        catch(IOException e) {
+            System.out.println("There was an IO Exception" + e);
         }
-    }
-
-    //simple function to echo data to terminal
-    public static void echo(String msg)
-    {
-        System.out.println(msg);
     }
 }
