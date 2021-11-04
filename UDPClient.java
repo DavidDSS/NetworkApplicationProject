@@ -8,7 +8,7 @@ public class UDPClient {
 
     public static void main(String args[]) throws IOException {
     
-        boolean gameOver = false;
+        boolean gameOver = false, valid= true, testFlag=false;
         int turn = 0;
         
         //Packet Size
@@ -24,13 +24,19 @@ public class UDPClient {
             //Open connection loop
             while(!gameOver) {
             
-                if(turn==0) System.out.println("Type 'start' to begin the game");
+                if(turn==0) System.out.println("Type 'start' to begin the game or 'test' to begin the game in testing mode");
 
                 //Obtain client's input
-                String input = (String)inputReader.readLine();
+                String input = "";
 
-                while(turn==0 && !input.toLowerCase().equals("start")){
+                while(turn==0 && valid){
                     input = (String)inputReader.readLine();
+
+                    if(input.equals("start")) valid=false;
+                    if(input.equals("test")){
+                        valid=false;
+                        testFlag=true;
+                    }
                 }
 
                 //Build DatagramPacket for client's input

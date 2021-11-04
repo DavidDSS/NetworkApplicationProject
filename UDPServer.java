@@ -13,7 +13,6 @@ public class UDPServer {
     	public static int numClients = 0;
     	public static List<PacketType> packetStack = new Stack<PacketType>(); // stores received packets
     	public static int sequenceNum = 1000;					 // global packet sequence numbers
-    	
     
 	public static void main(String args[]) throws IOException {
 
@@ -127,7 +126,7 @@ public class UDPServer {
 /**  The clientThread class helps manage the multi-threading of clients threads. */
 
 public class ClientThread implements Runnable {
-
+	public boolean testingMode=false;
 	private DatagramSocket socket = null;
 	private DatagramPacket packet;
 	public String move;		// the player's move
@@ -145,7 +144,10 @@ public class ClientThread implements Runnable {
 		DatagramPacket request = new DatagramPacket(new byte[1000], 1000);
 		socket.receive(request);
 		this.packet = request;
-		
+
+			String tst = new String(request.getData(), 0, request.getLength());
+			if(tst.equals("test")) testingMode=true;
+			
 		// Client has joined the game
 		UDPServer.incrNumClients();
 		System.out.println("A client has joined the server");
@@ -157,7 +159,7 @@ public class ClientThread implements Runnable {
                     // Checks for user input
                     request = new DatagramPacket(new byte[1000], 1000);
                     socket.receive(request);
-                    
+
                     // Save the time the packet was received
                     Timestamp time = new Timestamp(System.currentTimeMillis());
                   
@@ -168,7 +170,7 @@ public class ClientThread implements Runnable {
                     // Save the input as the client's move
                     String clientResponse = new String(request.getData(), 0, request.getLength());
                     this.move = clientResponse;
-                    
+					
                     if (this.move!=null) System.out.println("Player Move Accepted!");
                }
 	    }
