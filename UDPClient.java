@@ -4,12 +4,12 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 
-
 public class UDPClient {
 
     public static void main(String args[]) throws IOException {
     
         boolean gameOver = false;
+        boolean valid = true;
         int turn = 0;
         
         if(args.length != 1) {
@@ -24,26 +24,29 @@ public class UDPClient {
         BufferedReader inputReader = new BufferedReader(new InputStreamReader(System.in));
         
         try {
-            // Create Client socket
+            // Create client socket
             DatagramSocket clientSocket = new DatagramSocket();
             
             // Open connection loop
             while(!gameOver) {
             
-                if(turn==0) System.out.println("Type 'start' to begin the game");
+                if(turn==0) System.out.println("Type 'start' to begin the game or 'test' to enable Testing Mode");
 
-                // Obtain Client's input
-                String input = (String)inputReader.readLine();
+                // Obtain client's input
+                String input = "";
 
-                while(turn==0 && !input.toLowerCase().equals("start")){
+                while (turn==0 && valid) {
                     input = (String)inputReader.readLine();
+
+                    if (input.equals("start")) valid=false;
+                    if (input.equals("test"))  valid=false;
                 }
 
-                // Build DatagramPacket for Client's input
+                // Build DatagramPacket for client's input
                 DatagramPacket packet = new DatagramPacket(input.getBytes(), input.getBytes().length,
                         InetAddress.getByName("localhost"), 4000);
 
-                // Send Client's input
+                // Send client's input
                 clientSocket.send(packet);
 
                 for (int i=0; i<2; i++) {
@@ -62,23 +65,21 @@ public class UDPClient {
 			   System.out.println("Invalid move. Please enter one of the following: rock, paper, scissors\n");
 		}
 
-		// Build new DatagramPacket for Client's input
+		// Build new DatagramPacket for client's input
 		packet = new DatagramPacket(input.getBytes(), input.getBytes().length,
                         InetAddress.getByName("localhost"), 4000);
 
                 // Send Client's Input
                 clientSocket.send(packet);
                 
-                // Start timer (for delayed segment condition check)
+                // Start timer!
                 long startTime = System.currentTimeMillis();
                 Thread t = new Thread();
-            	t.start();
+            	 t.start();
             	
                 for (int i=0; i<2; i++) {
-			
                     //one second timer
 		    while (System.currentTimeMillis() < Long.sum(startTime,1000L)) { }
-			
 		    if (!t.isAlive()) {  
 			// Build DatagramPacket for server's response
                       	DatagramPacket reply = new DatagramPacket(bufferLength, bufferLength.length);
@@ -94,6 +95,7 @@ public class UDPClient {
 	  		t.interrupt();
 	  		System.out.println("Packet was lost");
 	  	    }
+	 
                 }
                 turn++;
             }
@@ -102,5 +104,4 @@ public class UDPClient {
 		System.out.println("Error: " + e.getMessage());
 	}
     }
-	
-}//UDPClient;
+}
