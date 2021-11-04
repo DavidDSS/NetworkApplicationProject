@@ -6,14 +6,14 @@ import java.util.*;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
-
 public class UDPServer {
 
     	public static List<ClientThread> clientStack = new Stack<ClientThread>();
     	public static String p1Move = null, p2Move = null;
-    	public static int numClients = 0;			// max clients should be 2 per game
-    	public static int sequenceNum = 1000;			// global packet sequence numbers
-    	public static PacketStack stack = new PacketStack();	// global stack of packets (for condition checks)
+    	public static int numClients = 0;
+    	public static PacketStack stack = new PacketStack();	// stack stores recent packets
+    	public static int sequenceNum = 1000;	 	// global packet sequence numbers
+    	public static boolean testingMode = false;	// marker can set testingMode to be true
     	
     
 	public static void main(String args[]) throws IOException {
@@ -37,7 +37,7 @@ public class UDPServer {
         	System.out.println("* ROCK, PAPER, SCISSORS *");
         	System.out.println("Waiting for 2 players to connect...");
 
-            	// Wait to accept incoming Clients
+            	// Wait to accept incoming clients
 		while(clientStack.size() < 2) {
 		   // Create client thread
 		   ClientThread client = new ClientThread(socket);
@@ -58,7 +58,7 @@ public class UDPServer {
 		clientStack.get(1).printLine(msg, clientStack.get(1).getPacket());
 
 		// Wait for both players to respond
-            	while (p1Move == null || p2Move == null) {
+            	while(p1Move == null || p2Move == null){
             	   p1Move = clientStack.get(0).getMove();
             	   p2Move = clientStack.get(1).getMove();
             	   System.out.print('\t');
@@ -73,25 +73,25 @@ public class UDPServer {
             	clientStack.get(0).printLine(p1msg, clientStack.get(0).getPacket());
             	clientStack.get(1).printLine(p2msg, clientStack.get(1).getPacket());
 
-		// Rock, Paper, Scissors logic
+		// Rock, Paper, Scissors Logic
             	if(p1Move.equals(p2Move)){
-                clientStack.get(0).printLine("Its a TIE", clientStack.get(0).getPacket());
-                clientStack.get(1).printLine("Its a TIE", clientStack.get(0).getPacket());
+                clientStack.get(0).printLine("It's a TIE!?!?!?!", clientStack.get(0).getPacket());
+                clientStack.get(1).printLine("It's a TIE!?!?!?!", clientStack.get(1).getPacket());
             	}
             	else if(p1Move.equals("rock")){
-            	   if(p2Move.equals("paper")) sendResults(2); 	 	// Player 2 Wins
-                   else if(p2Move.equals("scissors")) sendResults(1); 	// Player 1 Wins
+            	   if(p2Move.equals("paper")) sendResults(2); 	 // Player 2 Wins
+                   else if(p2Move.equals("scissors")) sendResults(1); // Player 1 Wins
                }
             	else if(p1Move.equals("paper")){
-            	   if(p2Move.equals("scissors")) sendResults(2); 	// Player 2 Wins
-                   else if(p2Move.equals("rock")) sendResults(1); 	// Player 1 Wins
+            	   if(p2Move.equals("scissors")) sendResults(2); 	 // Player 2 Wins
+                   else if(p2Move.equals("rock")) sendResults(1); 	 // Player 1 Wins
             	}
             	else if(p1Move.equals("scissors")){
-            	   if(p2Move.equals("rock")) sendResults(2); 	 	// Player 2 Wins
-                   else if(p2Move.equals("paper")) sendResults(1); 	// Player 1 Wins
+            	   if(p2Move.equals("rock")) sendResults(2); 	 	 // Player 2 Wins
+                   else if(p2Move.equals("paper")) sendResults(1); 	 // Player 1 Wins
                }
                
-               	// Send final messages to both clients
+               // Send final messages to both clients
             	System.out.println("Game Over!");
             	System.out.println("Results sent to players");
             	System.exit(1);
@@ -106,29 +106,24 @@ public class UDPServer {
 	    }
 	}
 	
-	/* This method increments the total number of active clients */
+	// Increments the total number of active clients
 	public static void incrNumClients() {
 	    numClients++;
 	}
 	
-	/* This method sends the WINNING and LOSING results to each of the active clients. */
+	// Winner is either 1 or 2 (indicating p1 and p2 respectively)
 	public static void sendResults(int winner) {
 	    String[] msg = {"You WON!", "You LOST!"};
 	    if (winner == 2) {
-	    	msg[0] = "You LOST!";
-	    	msg[1] = "You WON!";
+	    	msg[0] = "You LOST?!!?!";
+	    	msg[1] = "You WON!!!!!!";
 	    }
 	    clientStack.get(0).printLine(msg[0], clientStack.get(0).getPacket());
 	    clientStack.get(1).printLine(msg[1], clientStack.get(1).getPacket());
 	}
 		
-}//UDPServer;
+}
 
-
-/** This class behaves as a Stack/List listener. Each time a PacketType (packet) is added to the PacketStack (list), 
-the class performs a series of condition checks by comparing the sequence numbers of the packet received versus the 
-most recent packet on the stack. If no issues are detected (i.e., the sequence numbers of each packet increment by 1)
-then the previous packet will get removed from the stack. */
 
 public class PacketStack {
 
@@ -140,9 +135,11 @@ public class PacketStack {
     
     public void add(PacketType newPacket){
 
+	boolean testMode = UDPServer.testingMode;
+	
 	if (stack.isEmpty()) {
 	    stack.add(newPacket);
-	}  
+	}
 	else {
 		PacketType p = stack.get(stack.size()-1);
 		int pNum = p.getNum();
@@ -152,25 +149,29 @@ public class PacketStack {
 		
 		// Condition checks
 		if (pNum <= newNum) {
-		    System.out.println("Tried Adding Packet: previousPacket <= newPacket");
+		    if (testMode)
+		        System.out.println("Tried Adding Packet: previousPacket <= newPacket");
 		
 		    // If the new packet's segment number is +1 of the previous
 		    if (pNum - newNum == 1) {
-		        System.out.println("_Packet received - No issues detected");
+		        if (testMode)
+		            System.out.println("_Packet received - No issues detected");
 		        stack.remove(p);
 		    }
 		
 		    // If the new packet's segment number is the same as the previous's
-		    else if (pNum - newNum == 0) System.out.println("_Duplicate packet detected");
+		    else if (pNum - newNum == 0 && testMode) System.out.println("_Duplicate packet detected");
 		
 		    // If there is a gap greater than 1 between the two packets (new and previous)
-		    else if (pNum - newNum > 1) System.out.println("_Error: Lost segment detected between previous packet and current received packet");
+		    else if (pNum - newNum > 1 && testMode) System.out.println("_Error: Lost segment detected between previous packet and current received packet");
 		}
 	    
 		else {
-		    // If the new packet's segment number is less than that of the previous's
-		    System.out.println("Tried Adding Packet: previousPacket > newPacket");
-		    System.out.println("_Out-of-order packet delivery detected");
+		    if (testMode) {
+		        // If the new packet's segment number is less than that of the previous's
+		        System.out.println("Tried Adding Packet: previousPacket > newPacket");
+		        System.out.println("_Out-of-order packet delivery detected");
+		    }
 		}
 	}
 	    
@@ -202,16 +203,24 @@ public class ClientThread implements Runnable {
 	public void run() { 
 
 	    try {
-		// Wait for Client request
+	    
+		// Wait for client request
 		DatagramPacket request = new DatagramPacket(new byte[1000], 1000);
 		socket.receive(request);
 		this.packet = request;
-		
+	        
 		// Client has joined the game
 		UDPServer.incrNumClients();
 		System.out.println("\nA client has joined the server");
 		
-		// Put reply into packet and send to Client
+		// Check if in TESTING mode
+		String clientResponse = new String(request.getData(), 0, request.getLength());
+	        if (clientResponse.equals("test")) {
+	            UDPServer.testingMode = true;
+	            System.out.println("testing mode true!");
+	        }
+		
+		// Put reply into packet and send to client
 		printLine("Waiting for another player to join...\n", request);
 		
 		while (true) {
@@ -222,12 +231,12 @@ public class ClientThread implements Runnable {
                     // Save the time the packet was received
                     Timestamp time = new Timestamp(System.currentTimeMillis());
                   
-                    // Send the packet, it's timestamp, and it's sequence number to the Server
+                    // Send the packet, it's timestamp, and it's sequence number to the server
                     this.packet = request;
                     sendPacket(request, time, UDPServer.sequenceNum);
                     
-                    // Save the input as the Client's move
-                    String clientResponse = new String(request.getData(), 0, request.getLength());
+                    // Save the input as the client's move
+                    clientResponse = new String(request.getData(), 0, request.getLength());
                     this.move = clientResponse;
                     
                     if (this.move!=null) System.out.println("\nPlayer Move Accepted!");
@@ -257,26 +266,22 @@ public class ClientThread implements Runnable {
             return this.packet;
         }
         
-	/** This method sends and saves a packet into the Server's packet stack. */
         public void sendPacket(DatagramPacket packet, Timestamp time, int num) {
             UDPServer.sequenceNum += 1;
             UDPServer.stack.add(new PacketType(packet, time, num));
         }
         
-	/** This method gets the player's move. */
         public String getMove() {
             return this.move;
         }
-	
-}//ClientThread;
+}
 
 
-/** This class represents a PacketType object which stores a packet, timestamp of creation, and sequence number. */
 public class PacketType {
 
-	private DatagramPacket packet;	// the packet
-	private Timestamp time;		// timestamp of creation
-	private int num;		// sequence number
+	private DatagramPacket packet;
+	private Timestamp time;
+	private int num;
 	
 	public PacketType(DatagramPacket packet, Timestamp time, int num) {
 	    this.packet = packet;
@@ -294,4 +299,4 @@ public class PacketType {
 		return this.num;
 	} 
 		
-}//PacketType;
+}
