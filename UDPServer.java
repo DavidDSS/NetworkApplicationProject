@@ -3,12 +3,16 @@
 import java.net.*;
 import java.io.*;
 import java.util.*;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 
 public class UDPServer {
 
     	public static List<ClientThread> clientStack = new Stack<ClientThread>();
     	public static String p1Move = null, p2Move = null;
     	public static int numClients = 0;
+    	public static List<PacketType> packetStack = new Stack<PacketType>(); // stores received packets
+    	public static int sequenceNum = 1000;					 // global packet sequence numbers
     	
     
 	public static void main(String args[]) throws IOException {
@@ -18,7 +22,7 @@ public class UDPServer {
 	    int maxThreads = 2;
 
 	    if(args.length != 1) {
-		System.err.println("Provide Parameter: java UDPServer <port number>");
+		System.err.println("Provide Parameter: java UDPServer.java <port number>");
 		System.exit(1);
 	    }
 		
@@ -52,7 +56,7 @@ public class UDPServer {
 		clientStack.get(0).printLine(msg, clientStack.get(0).getPacket());
 		clientStack.get(1).printLine(msg, clientStack.get(1).getPacket());
 
-		//Wait for both players to respond
+		// Wait for both players to respond
             	while(p1Move == null || p2Move == null){
             	   p1Move = clientStack.get(0).move;
             	   p2Move = clientStack.get(1).move;
@@ -106,7 +110,7 @@ public class UDPServer {
 	    numClients++;
 	}
 	
-	// int Winner is either 1 or 2 (indicating p1 and p2 respectively)
+	// Winner is either 1 or 2 (indicating p1 and p2 respectively)
 	public static void sendResults(int winner) {
 	    String[] msg = {"You WON!", "You LOST!"};
 	    if (winner == 2) {
@@ -126,7 +130,8 @@ public class ClientThread implements Runnable {
 
 	private DatagramSocket socket = null;
 	private DatagramPacket packet;
-	public String move;	// the player's move
+	public String move;		// the player's move
+
 
 	public ClientThread(DatagramSocket socket) {
 	    this.socket = socket;
@@ -152,7 +157,13 @@ public class ClientThread implements Runnable {
                     // Checks for user input
                     request = new DatagramPacket(new byte[1000], 1000);
                     socket.receive(request);
+                    
+                    // Save the time the packet was received
+                    Timestamp time = new Timestamp(System.currentTimeMillis());
+                  
+                    // Send the packet, it's timestamp, and it's sequence number to the server
                     this.packet = request;
+                    sendPacket(request, time, UDPServer.sequenceNum);
                     
                     // Save the input as the client's move
                     String clientResponse = new String(request.getData(), 0, request.getLength());
@@ -185,6 +196,25 @@ public class ClientThread implements Runnable {
             return this.packet;
         }
         
+        public void sendPacket(DatagramPacket packet, Timestamp time, int num) {
+            UDPServer.sequenceNum += 1;
+            UDPServer.packetStack.add(new PacketType(packet, time, num));
+        }
+        
         
 }
 
+
+public class PacketType {
+
+	public static DatagramPacket packet;
+	public static Timestamp time;
+	public static int sequenceNum;
+	
+	public PacketType(DatagramPacket packet, Timestamp time, int num) {
+	    this.packet = packet;
+	    this.time = time;
+	    this.sequenceNum = num;
+	}
+	
+}
