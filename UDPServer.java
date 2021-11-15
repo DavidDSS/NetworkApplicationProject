@@ -17,7 +17,12 @@ public class UDPServer {
     	
     
 	public static void main(String args[]) throws IOException {
-
+	    
+	    // Initialize IP addresses and port numbers
+	    int port1 = 0, port2 = 0;
+	    String address1 = null, address2;
+	    byte[] bytes = new byte[1024];
+        
 	    // Connection Parameters
 	    DatagramSocket socket = null;
 	    int maxThreads = 2;
@@ -26,7 +31,25 @@ public class UDPServer {
 		System.err.println("Provide Parameter: java UDPServer.java <port number>");
 		System.exit(1);
 	    }
-		
+	
+	    // Connect and save both client's NAT
+	    try {
+	        DatagramSocket socketTemp = new DatagramSocket(789);
+	        DatagramPacket p = new DatagramPacket(bytes, bytes.length);
+	        socketTemp.receive(p);
+	    	if(port1 == 0) {
+	    	    port1 = p.getPort();
+	    	    address1 = p.getAddress().getHostAddress();
+	        }
+            	else {
+            	    port2 = p.getPort();
+            	    address2 = p.getAddress().getHostAddress();
+            	    requestConnection(address1, port1, address2, port2, socketTemp);
+            	    requestConnection(address2, port2, address1, port1, socketTemp);
+            	}
+            	socketTemp.close();
+            } catch (Exception e) {}
+            
 	    // Retrieve user input
 	    int serverPort = Integer.parseInt(args[0]);
 
@@ -121,8 +144,21 @@ public class UDPServer {
 	    clientStack.get(0).printLine(msg[0], clientStack.get(0).getPacket());
 	    clientStack.get(1).printLine(msg[1], clientStack.get(1).getPacket());
 	}
+	
+	public static void requestConnection(String a1, int p1, String a2, int p2, DatagramSocket d) {
+            byte[] bA = a1.getBytes();
+            byte[] bP = Integer.toString(p1).getBytes();
+            DatagramPacket packet;
+            try {
+                packet = new DatagramPacket(bA, bA.length, InetAddress.getByName(a2), p2);
+                d.send(packet);
+                packet = new DatagramPacket(bP, bP.length, InetAddress.getByName(a2), p2);
+                d.send(packet);
+            }
+            catch(Exception e) {}
+        }
 		
-}
+}//UDPServer;
 
 
 public class PacketStack {
@@ -150,27 +186,27 @@ public class PacketStack {
 		// Condition checks
 		if (pNum <= newNum) {
 		    if (testMode)
-		        System.out.println("Tried Adding Packet: previousPacket <= newPacket");
+		        System.out.println("\nTried Adding Packet: previousPacket <= newPacket");
 		
 		    // If the new packet's segment number is +1 of the previous
-		    if (pNum - newNum == 1) {
+		    if (newNum - pNum == 1) {
 		        if (testMode)
-		            System.out.println("_Packet received - No issues detected");
+		            System.out.println("\n_Packet received - No issues detected");
 		        stack.remove(p);
 		    }
 		
 		    // If the new packet's segment number is the same as the previous's
-		    else if (pNum - newNum == 0 && testMode) System.out.println("_Duplicate packet detected");
+		    else if (newNum - pNum == 0 && testMode) System.out.println("\n_Duplicate packet detected");
 		
 		    // If there is a gap greater than 1 between the two packets (new and previous)
-		    else if (pNum - newNum > 1 && testMode) System.out.println("_Error: Lost segment detected between previous packet and current received packet");
+		    else if (newNum - pNum > 1 && testMode) System.out.println("\n_Error: Lost segment detected between previous packet and current received packet");
 		}
 	    
 		else {
 		    if (testMode) {
 		        // If the new packet's segment number is less than that of the previous's
-		        System.out.println("Tried Adding Packet: previousPacket > newPacket");
-		        System.out.println("_Out-of-order packet delivery detected");
+		        System.out.println("\nTried Adding Packet: previousPacket > newPacket");
+		        System.out.println("\n_Out-of-order packet delivery detected");
 		    }
 		}
 	}
@@ -274,7 +310,7 @@ public class ClientThread implements Runnable {
         public String getMove() {
             return this.move;
         }
-}
+}//ClientThread;
 
 
 public class PacketType {
@@ -299,4 +335,4 @@ public class PacketType {
 		return this.num;
 	} 
 		
-}
+}//PacketType;
